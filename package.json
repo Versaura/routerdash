@@ -1,0 +1,17 @@
+{
+  "name": "routerdash",
+  "version": "0.3.0",
+  "description": "Local dashboard for the GTPL Camnex CNP4000A router",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/smoke.test.js"
+  },
+  "dependencies": {
+    "node-html-parser": "^6.1.13"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true
+}

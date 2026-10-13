@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+*.log
+*.pem
+posts.json
+# user data lives in ~/.routerdash, but never commit a copy of it
+.routerdash/
+config.json
+data.json
+activity/
