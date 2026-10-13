@@ -36,6 +36,7 @@ All endpoints are JSON. Every route except `info`, `setup` and `login` needs the
 |---|---|---|
 | `PORT` | 8686 | Dashboard port |
 | `DNS_PORT` | 53 | DNS recorder port |
-| `DNS_UPSTREAMS` | `182.237.9.10,8.8.8.8` | Comma list; `host:port` allowed |
+| `DNS_UPSTREAMS` | your ISP's DNS (read from the router), then `1.1.1.1,8.8.8.8` | Comma list; `host:port` allowed |
+| `LAN_PREFIX` | from the router address, e.g. `192.168.1.` | Override the LAN range (tests use it) |
 | `ROUTER_PORT` | 443 | Router HTTPS port (tests use the mock's port) |
 | `ROUTERDASH_DIR` | `~/.routerdash` | Config and data folder |

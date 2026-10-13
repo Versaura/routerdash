@@ -1,4 +1,6 @@
-# Router notes: Camnex CNP4000A (GTPL)
+# Router notes: Realtek boa admin interface
+
+Verified device: **Camnex CNP4000A (GTPL)**. Other Realtek ONTs with the same admin UI usually share these pages; differences go in a new section at the end.
 
 What we learned from the real device, firmware `GTPL_V4.0.1-260626`, on 2026-10-13. Treat this as the source of truth for field names. Re-check it against the live router after a firmware update.
 

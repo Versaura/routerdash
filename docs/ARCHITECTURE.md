@@ -9,7 +9,7 @@
                                          │  speed-limit reconciler (slow poll)
                                          └─ lib/router.js ─ lib/form.js (checksum)
 
- Every device on Wi-Fi ──DNS :53──▶   lib/dns.js ──▶ 182.237.9.10 / 8.8.8.8
+ Every device on Wi-Fi ──DNS :53──▶   lib/dns.js ──▶ ISP DNS (from router) / 1.1.1.1 / 8.8.8.8
    (router DHCP hands out                └─ ~/.routerdash/activity/YYYY-MM-DD.jsonl
     the Mac as DNS1)                         └─ lib/services.js classify → buildTimeline
 ```
@@ -17,6 +17,8 @@
 ## Data flow
 
 **Reads.** The fast poller fetches `wlstatbl.asp` for both radios every 4 s and turns byte counters into per-device bit rates. 32-bit counters wrap, which is handled. The slow poller fetches status, ARP, DHCP leases, radio settings, parental rules and reservations every 30 s, then runs the speed-limit reconciler. The UI polls `GET /api/state` every 4 s, and that request is served from memory.
+
+**LAN range.** It comes from the router's address (192.168.1.1 → 192.168.1.x), and `LAN_PREFIX` overrides it.
 
 **Writes.** API handler → `router.submit()`. That loads the page, parses the form, applies values, runs the page-specific `mutate` that mirrors its JavaScript, serialises with the checksum, and POSTs.
 
@@ -37,7 +39,7 @@ Rules follow IP addresses, so devices should have fixed IPs (MAC-Based Assignmen
 
 ## Activity history
 
-Once the router's DHCP DNS option says *Set Manually: DNS1 = the Mac*, devices send their lookups to `lib/dns.js`. It forwards each one unchanged to GTPL's DNS, falling back to 8.8.8.8, and returns the answer. TCP queries are piped through.
+Once the router's DHCP DNS option says *Set Manually: DNS1 = the Mac*, devices send their lookups to `lib/dns.js`. It forwards each one unchanged to the ISP's DNS (read from the router's status page), falling back to 1.1.1.1 and 8.8.8.8, and returns the answer. TCP queries are piped through.
 
 Each lookup is logged as `{t, ip, mac, q}`. Repeats of the same name from the same IP within 60 s are skipped. The log is written in batches every 5 s and kept for 30 days.
 

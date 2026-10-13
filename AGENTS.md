@@ -4,7 +4,9 @@ Guide for AI coding tools (Claude Code, Codex, Copilot, Cursor) and new contribu
 
 ## What this is
 
-RouterDash is a local web dashboard for one specific router: the **GTPL Camnex CNP4000A** fibre ONT (Realtek chipset, `boa` web server, firmware `GTPL_V4.0.1-260626`). It runs on a Mac on the home network and is opened from phones on the same Wi-Fi at `http://<mac-ip>:8686`.
+RouterDash (by Versaura) is a local web dashboard for ISP-supplied fibre routers (ONTs) built on **Realtek** chipsets that use the Realtek `boa` admin web interface: `/admin/login.asp`, `/boaform/...` form actions, and a `postSecurityFlag` checksum. It runs on an always-on computer on the home network and is opened from phones on the same Wi-Fi at `http://<computer-ip>:8686`.
+
+Verified on the **Camnex CNP4000A** supplied by GTPL (firmware `GTPL_V4.0.1-260626`). Other routers in the same family should work but are untested; `npm run check` probes a router without logging in. Don't hard-code one ISP or model: take the LAN range from the router address (`Router.lan`), DNS upstreams from the router's status page, and the model name from `status.asp`.
 
 The router has no API. RouterDash reads its admin web pages and submits its HTML forms exactly as the router's own pages would.
 
@@ -14,6 +16,7 @@ The router has no API. RouterDash reads its admin web pages and submits its HTML
 npm install        # one dependency: node-html-parser
 npm start          # app on :8686, DNS recorder on :53
 npm test           # end-to-end: mock router + fake DNS upstream (needs openssl)
+npm run check      # is this router supported? (read-only)
 ```
 
 Node 18+. No build step, no bundler, no framework.
@@ -30,6 +33,7 @@ Node 18+. No build step, no bundler, no framework.
 | `public/index.html` | The whole UI: one file, vanilla JS, no build |
 | `test/mock-router.js` | Fake router used by tests; mirrors real field names and the checksum check |
 | `test/smoke.test.js` | End-to-end tests (`node:test`) |
+| `scripts/check-router.js` | `npm run check`: read-only compatibility probe |
 | `docs/` | Architecture, router reverse-engineering notes, API reference |
 
 User data lives in `~/.routerdash/` (outside the repo): `config.json` holds the router password and PIN hash; `data.json` holds names, schedules and limits; `activity/*.jsonl` holds DNS history. Never commit anything from there.

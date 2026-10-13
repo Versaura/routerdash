@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Branded as RouterDash by Versaura; new README with banner and screens.
+- Works beyond GTPL: LAN range, DNS upstreams and model name now come from the router.
+- `npm run check`: read-only compatibility probe for other Realtek-based routers.
 
 ## 0.3.0 — 2026-10-13
 - Fixed IPs per device (router MAC-Based Assignment).

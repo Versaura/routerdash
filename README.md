@@ -1,124 +1,238 @@
-# RouterDash
+<div align="center">
 
-A Xiaomi-style dashboard for the GTPL **Camnex CNP4000A** fibre router (firmware `GTPL_V4.0.1`).
-It runs on your Mac and you open it from any phone or laptop on your Wi-Fi.
+<img src="docs/assets/banner.svg" alt="RouterDash by Versaura" width="100%">
 
-## Start it
+<br>
+
+**See who's online, control how fast, decide when, and know what's being used.**<br>
+A beautiful dashboard for the fibre router your internet provider gave you. It runs on your own computer, with no cloud and no account.
+
+<br>
+
+![Node 18+](https://img.shields.io/badge/node-18%2B-1f2530?style=flat-square&logo=node.js&logoColor=white)
+![Runs locally](https://img.shields.io/badge/runs-100%25%20local-ff6a00?style=flat-square)
+![Realtek ONT routers](https://img.shields.io/badge/routers-Realtek%20fibre%20ONTs-1f2530?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-7%20passing-12a150?style=flat-square)
+
+[**Get started**](#-get-started-in-2-minutes) · [Features](#-what-you-get) · [Will it work with my router?](#-will-it-work-with-my-router) · [FAQ](#-good-to-know)
+
+</div>
+
+---
+
+<img src="docs/assets/screens.svg" alt="RouterDash screens: devices, activity timeline, speed limits" width="100%">
+
+## ✨ What you get
+
+| | |
+|---|---|
+| 📶 **Live speed** | Download and upload right now, plus a running graph and the busiest devices |
+| 📱 **Every device** | Name, band (2.4 / 5 GHz), signal, IP, link speed, data used, time online |
+| 🚦 **Speed limits** | Everyone gets a fair share by default, and the devices you choose get full speed |
+| 📌 **Fixed IPs** | Pin a device to one address so rules always follow it |
+| 🌙 **Bedtimes** | No internet for the kids' tablet on school nights, enforced by the router itself |
+| ⛔ **One-tap block** | Cut a device off instantly, and undo it just as fast |
+| ⏰ **Wi-Fi schedules** | Turn 2.4 GHz or 5 GHz off at night and on in the morning, plus weekly auto-restart |
+| 🕵️ **Activity history** | "YouTube 8:10–8:44 PM, Instagram 9:05–9:22 PM" for each device, with system noise filtered out |
+| 🔀 **Port forwarding** | Open ports for a NAS, camera or game server |
+| 🚫 **Website blocking** | Block a site for the whole house |
+| 📲 **Works on your phone** | Add it to your home screen and it feels like an app |
+
+## 🚀 Get started in 2 minutes
+
+You need a computer that stays on at home (a Mac, a Linux box or a Raspberry Pi) with [Node.js 18+](https://nodejs.org).
 
 ```bash
-cd ~/Downloads/routerdash     # wherever you unzipped it
+git clone https://github.com/Versaura/routerdash.git
+cd routerdash
 npm install
+npm run check     # 30-second test: is my router supported?
 npm start
 ```
 
-The terminal prints two addresses:
+Then:
 
-- `http://localhost:8686` — open this on the Mac.
-- `http://192.168.1.x:8686` — open this on your phone. In Safari, tap Share → **Add to Home Screen** to get an app icon.
+1. Open **http://localhost:8686** and enter your router's admin username and password. They're the same ones you use for its web page and are often printed on the sticker underneath.
+2. Choose a 4–8 digit **app PIN**. It keeps others on your Wi-Fi out of the dashboard.
+3. On your phone, open the address the terminal prints (`http://192.168.x.x:8686`), then tap **Share → Add to Home Screen**.
 
-On first open, enter the router username and password (the ones you used at `https://192.168.1.1/admin/login.asp`) and choose a 4–8 digit PIN. The router password is stored only on this Mac, in `~/.routerdash/config.json`, readable only by your user.
+<details>
+<summary><b>Keep it running all the time</b> (recommended)</summary>
 
-## Keep it running
-
-The Wi-Fi and reboot schedules run on this Mac, so it needs to stay on and running RouterDash. You already have pm2 installed:
+<br>
 
 ```bash
+npm install -g pm2
 pm2 start server.js --name routerdash
-pm2 save
-pm2 startup        # run the command it prints, so RouterDash starts after a restart
+pm2 save && pm2 startup      # run the command it prints
 ```
 
-To stop the Mac sleeping while plugged in: System Settings → Battery → Options → "Prevent automatic sleeping on power adapter when the display is off".
+Schedules and activity history only work while RouterDash is running. Stop your computer sleeping when it's plugged in, or run RouterDash on a Raspberry Pi.
+</details>
 
-## What it does
+## 🧭 Will it work with my router?
 
-| Feature | Where it runs | Notes |
-|---|---|---|
-| Live download/upload speed, per device and total | Mac | Measured from the router's Wi-Fi counters every 4 s. Wired traffic isn't counted. |
-| Connected devices (band, signal, IP, link speed, time connected, data used) | Mac | Name each device by tapping it. |
-| Block a device's internet | **Router** | Uses the router's Parental Control. Keeps working when the Mac is off. |
-| Bedtimes per device (days + time window) | **Router** | Same mechanism. Start must be earlier than end; split overnight windows in two. |
-| Wi-Fi 2.4 GHz / 5 GHz on/off, now or on a schedule | Mac | The router has no Wi-Fi timer. The band this Mac uses can't be scheduled off, because the Mac would lose the router. Use a cable to schedule both. |
-| Scheduled restart | Mac | |
-| Port forwarding | Router | See the CGNAT note below. |
-| Website and keyword blocking | Router | Applies to all devices. |
+RouterDash talks to the router through its own admin web pages. It works with fibre routers (ONTs) built on **Realtek chipsets** that use the classic Realtek admin interface. Many internet providers hand these out under different brand names.
 
-## Fixed IP addresses
+| Status | Routers |
+|---|---|
+| ✅ **Verified** | **Camnex CNP4000A**, supplied by GTPL (firmware `GTPL_V4.0.1`) |
+| 🟡 **Should work** | Other Realtek-based GPON/EPON fibre routers with the same admin interface, often rebranded by the ISP. Not tested yet; run `npm run check` |
+| ❌ **Not supported** | Routers with a different interface: most Huawei, ZTE, Nokia, TP-Link, Netgear, ASUS, and Wi-Fi mesh systems |
 
-Open a device → **Fixed IP address** → *Fix this IP*. This uses the router's MAC-Based Assignment, so the device always gets that address. It takes effect the next time the device reconnects to Wi-Fi.
+**Quick ways to tell:**
 
-Fix the Mac's own address first (192.168.1.3). Activity history depends on it. Also set the Mac's Wi-Fi to a stable hardware address: System Settings → Wi-Fi → Details (next to your network) → Private Wi-Fi address → **Off** (or **Fixed**).
+- The admin page opens at `https://<router-ip>/admin/login.asp`.
+- The browser tab says **"BroadBand Device Webserver"**.
+- The menu has **Status · LAN · WLAN · WAN · Services · Advance · Diagnostics · Admin · Statistics**.
+- `npm run check` prints **Looks compatible**.
 
-## Speed limits
+> [!TIP]
+> Tried it on another router? [Open an issue](https://github.com/Versaura/routerdash/issues) with your model and the `npm run check` output, whether it worked or not. That's how the ✅ list grows.
 
-Tools → **Speed limits**. When it's on, every device gets the default limit (10 Mbps down / 3 Mbps up to start) except the ones you mark **Full speed** on their device page. You can also give one device its own limit.
+## 🔎 Feature tour
 
-- Rules live on the router (IP QoS → Traffic Shaping), one per device and direction. RouterDash checks every 30 seconds and adds or removes rules, so new devices are limited shortly after they join.
-- This Mac is added to the full-speed list automatically.
-- Turning it off removes every rule RouterDash made and turns QoS back off.
-- Run a speed test from a full-speed device after turning it on. On some fibre routers QoS lowers the top speed.
-- Rules follow IP addresses, so give full-speed devices a fixed IP.
+<details>
+<summary><b>🚦 Speed limits: fair sharing, full speed for favourites</b></summary>
 
-## Activity history
+<br>
 
-The Activity tab shows which apps and websites each device used, and when. For example: "YouTube 8:10–8:44 PM", "Instagram 9:05–9:22 PM". Background noise (Apple/Google system services, app analytics, ads, CDNs, WhatsApp's always-on connection) is kept out of the timeline and summarised separately.
+Turn it on in **Tools → Speed limits** and set a default, for example 10 Mbps down and 3 Mbps up. Every device gets that, except the ones you mark **Full speed** on their device page. Any device can also have its own limit.
 
-How it works: RouterDash runs a small DNS server on this Mac (port 53). Devices look up names through it, it forwards each lookup to GTPL's DNS unchanged, and writes down which device asked for what. History stays on this Mac for 30 days (`~/.routerdash/activity`).
+- Limits are enforced **by the router**, not by your computer, so they keep working even if RouterDash is closed.
+- New devices are limited automatically about 30 seconds after they join.
+- Your computer is put on the full-speed list for you.
+- Turning it off removes every rule RouterDash created.
 
-**One-time router setup** (after RouterDash is running and the Mac has its fixed IP):
+> [!NOTE]
+> Limits follow IP addresses. Give your full-speed devices a **fixed IP** so a new device can't inherit one by accident.
+</details>
 
-1. On the router: LAN → DHCP → **DNS option: Set Manually**
-2. DNS1 = `192.168.1.3` (this Mac), DNS2 = `182.237.9.10` (GTPL)
-3. Apply. Devices pick it up when they reconnect or renew (toggle Wi-Fi off/on to speed it up).
+<details>
+<summary><b>🕵️ Activity history: what each device used, in plain language</b></summary>
 
-To check it from Terminal: `dig @192.168.1.3 youtube.com` should return an address.
+<br>
 
-To undo: set DNS option back to **Use DNS Proxy**.
+```
+Akash's iPhone · Today
+  8:10 – 8:44 PM   YouTube            34 min
+  9:05 – 9:22 PM   Instagram          17 min
+  9:30 PM          WhatsApp           briefly
+ 10:00 – 10:06 PM  moneycontrol.com    6 min
+  ▸ Background: Apple services, analytics, ads (412 lookups)
+```
 
-What to expect:
-- DNS2 keeps the internet working if the Mac is off or asleep. Devices sometimes use DNS2 anyway, and those lookups aren't recorded, so some gaps are normal.
-- iPhones with iCloud Private Relay, Chrome/Firefox "Secure DNS", Android "Private DNS", and VPNs bypass it. Those devices show little or nothing.
-- Times are estimates. A session runs from the first lookup to the last, joining gaps under 10 minutes.
-- It records site names (youtube.com), not pages or searches.
-- Tell the people in your home that this is on.
+Every device looks up website names (DNS) before connecting. RouterDash answers those lookups for your home network, passes each one on to your provider unchanged, and records which device asked for what. A catalog of 130+ apps and services turns raw names like `rr3---sn-ci5g.googlevideo.com` into **YouTube**. Background chatter, such as phone OS services, app analytics, ads, CDNs and WhatsApp's always-on connection, is kept out of the timeline.
 
-If macOS refuses port 53, the Activity tab says so. Running `sudo npm start` fixes it.
+**One-time setup on the router:** LAN → DHCP → DNS option → **Set Manually**. Set **DNS1** to your computer's IP and **DNS2** to your provider's DNS. RouterDash shows you the exact values on the Activity tab.
 
-## Important: port forwarding and CGNAT
+- It records site names, not pages, searches or messages.
+- History stays on your computer for 30 days and can be deleted with one tap.
+- Devices using iCloud Private Relay, a VPN or "Secure DNS" won't show up.
+- Let the people in your home know it's on.
+</details>
 
-Your router's internet address is **10.130.x.x**, a private carrier (CGNAT) address. GTPL shares one public IP between many customers, so a port-forward rule saves fine but **nothing becomes reachable from the internet**. Ask GTPL for a public/static IP (usually a paid add-on), or use Tailscale or Cloudflare Tunnel, which work behind CGNAT.
+<details>
+<summary><b>🌙 Bedtimes and blocking</b></summary>
 
-## Private MAC addresses
+<br>
 
-iPhones and Android phones use a random MAC per network by default. That makes them show up as "Phone / tablet", and blocks or bedtimes can stop working if the phone changes its address. For your home Wi-Fi, turn this off on each phone:
+Pick a device, the days and a time window. The rule is saved **on the router** (Parental Control), so it works even when your computer is off. **Block internet** on a device page adds an all-day rule; **Unblock** removes it.
 
-- iPhone: Settings → Wi-Fi → (i) next to your network → Private Wi-Fi Address → Off
-- Android: Wi-Fi → your network → Privacy → Use device MAC
+For overnight bedtimes, add two windows, such as 22:30–23:59 and 00:00–06:30. The router needs each window's start to come before its end.
+</details>
 
-## First run: check each control once
+<details>
+<summary><b>⏰ Wi-Fi schedules and auto-restart</b></summary>
 
-Every save is built from the router's own form and signed with the same checksum its web page uses, which was verified against the router. Still, before relying on a schedule, try each control once while you can see the router's own page:
+<br>
 
-1. Turn **2.4 GHz** off and on from the Home screen (the Mac is on 5 GHz, so it stays connected).
-2. Add a bedtime for a test device, check it appears under Advance → Parental Control on the router, then remove it.
-3. Add and remove a test port-forward rule.
+Turn the 2.4 GHz or 5 GHz radio off and on at set times, or restart the router weekly. These run from your computer, because these routers have no built-in Wi-Fi timer. RouterDash won't let you schedule off the band your computer is using, since it couldn't switch it back on. Use a network cable to schedule both bands.
+</details>
 
-If something doesn't take effect, the terminal shows each `POST` the app sent. Send me that line and the router page's behaviour, and I'll adjust the field mapping.
+## 💡 Good to know
 
-## Notes
+<details>
+<summary><b>Port forwarding saves but nothing is reachable from outside</b></summary>
 
-- The router allows one admin session at a time. If you log into `192.168.1.1` in a browser while RouterDash runs, one may log the other out. RouterDash logs back in automatically.
-- The router uses a self-signed certificate. RouterDash accepts it only for the router's address.
-- Change the port with `PORT=9000 npm start`.
+<br>
 
-## Development
+Many providers put homes behind **CGNAT**, which means one public IP is shared by many customers. RouterDash warns you when it sees this, for example when the router's internet IP starts with `10.` or `100.64–127.`. Ask your provider for a public or static IP, or use [Tailscale](https://tailscale.com) or [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/), which work behind CGNAT.
+</details>
+
+<details>
+<summary><b>A phone shows up as "Phone / tablet", or rules stop matching it</b></summary>
+
+<br>
+
+Phones use a random ("private") MAC address per network. Turn it off for your home Wi-Fi so names, limits and bedtimes stay attached:
+
+- **iPhone:** Settings → Wi-Fi → ⓘ next to your network → Private Wi-Fi Address → Off
+- **Android:** Wi-Fi → your network → Privacy → Use device MAC
+- **Mac:** System Settings → Wi-Fi → Details → Private Wi-Fi address → Off or Fixed
+</details>
+
+<details>
+<summary><b>I got logged out of the router's web page</b></summary>
+
+<br>
+
+These routers allow one admin session at a time. RouterDash logs back in by itself. If you use the router's own page, RouterDash simply waits its turn.
+</details>
+
+<details>
+<summary><b>Can it run on the router itself?</b></summary>
+
+<br>
+
+No. Provider routers are locked down, have very little memory, and get updated remotely. A Raspberry Pi or any always-on computer is the right home for RouterDash.
+</details>
+
+<details>
+<summary><b>macOS says port 53 is refused</b></summary>
+
+<br>
+
+Activity history needs port 53. Run `sudo npm start`, or keep history off. Everything else works without it.
+</details>
+
+## 🔐 Privacy and security
+
+- **Nothing leaves your home.** There's no cloud, account, analytics or tracking. It's just your computer and your router.
+- Your router password stays on your computer in `~/.routerdash/config.json`, readable only by you. The dashboard is locked with a PIN and locks out for a minute after 5 wrong tries.
+- RouterDash never touches firmware, factory reset, admin passwords or your provider's WAN settings.
+- Keep the dashboard on your home network. For remote access, use [Tailscale](https://tailscale.com), not a public link.
+
+## 🛠️ How it works
+
+```mermaid
+flowchart LR
+  P["📱 Phone / laptop<br/>browser"] -- "http :8686" --> R["💻 RouterDash<br/>on your computer"]
+  R -- "admin pages over HTTPS" --> X["📡 Your fibre router"]
+  D["Devices on Wi-Fi"] -- "DNS lookups :53" --> R
+  R -- "forwarded unchanged" --> I["🌐 Provider DNS"]
+```
+
+RouterDash reads the router's admin pages and submits its forms exactly the way the router's own web page does, including the checksum the router expects. No hacks and no firmware changes.
+
+## 👩‍💻 For developers
 
 ```bash
-npm test     # end-to-end tests against a mock router (needs openssl)
+npm test           # 7 end-to-end tests against a mock router (needs openssl)
+npm run check      # compatibility probe, read-only
 ```
 
-- [AGENTS.md](AGENTS.md): how the code is organised and the rules for changing it (also read by AI coding tools)
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how data flows, speed limits, activity history
-- [docs/ROUTER-NOTES.md](docs/ROUTER-NOTES.md): every router page, form field and quirk we rely on
-- [docs/API.md](docs/API.md): the dashboard's JSON API and environment variables
-- [CHANGELOG.md](CHANGELOG.md)
+| Read | For |
+|---|---|
+| [AGENTS.md](AGENTS.md) | Code layout and the rules for changing it, written for people and AI coding tools |
+| [docs/ROUTER-NOTES.md](docs/ROUTER-NOTES.md) | Every router page, form field and quirk RouterDash relies on |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data flow, speed limits, activity history |
+| [docs/API.md](docs/API.md) | JSON API and environment variables |
+| [CHANGELOG.md](CHANGELOG.md) | What changed |
+
+**Adding a router:** run `npm run check`, then follow *Changing router behaviour safely* in [AGENTS.md](AGENTS.md).
+
+<div align="center">
+<br>
+<sub>Made with care by <b>Versaura</b> · For home networks that deserve better software</sub>
+</div>
