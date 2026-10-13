@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// RouterDash — a local dashboard for the GTPL Camnex CNP4000A router.
+// RouterDash by Versaura — a local dashboard for Realtek-based ISP fibre routers
+// (verified on the Camnex CNP4000A supplied by GTPL).
 // Runs on your Mac; open http://<mac-ip>:8686 from any phone on your Wi-Fi.
 'use strict';
 const http = require('http');
@@ -34,6 +35,7 @@ const saveData = () => writeJSON(DATA, data);
 
 let router = config ? new Router({ host: config.host, username: config.username, password: config.password, log }) : null;
 const sessions = new Map(); // token -> expiry
+const lanPrefix = () => process.env.LAN_PREFIX || (config?.host || '192.168.1.1').split('.').slice(0, 3).join('.') + '.';
 
 // ---------- live state, polled in the background ----------
 const state = {
@@ -46,7 +48,7 @@ let arpCache = [], dhcpCache = [];
 const isRandomMac = m => /^.[26ae]/i.test(m);
 function selfIdentity() {
   for (const list of Object.values(os.networkInterfaces())) for (const i of list || [])
-    if (i.family === 'IPv4' && !i.internal && i.address.startsWith('192.168.1.')) return { ip: i.address, mac: (i.mac || '').toLowerCase() };
+    if (i.family === 'IPv4' && !i.internal && i.address.startsWith(lanPrefix())) return { ip: i.address, mac: (i.mac || '').toLowerCase() };
   return null;
 }
 
@@ -106,6 +108,11 @@ async function pollSlow() {
     router.parental().catch(() => null),
   ]);
   state.status = status; arpCache = arp; dhcpCache = dhcp;
+  // Forward lookups to the ISP's own DNS (what the router uses), public DNS as backup.
+  if (!process.env.DNS_UPSTREAMS) {
+    const isp = String(status.dns || '').split(/[\s,]+/).filter(x => /^\d+\.\d+\.\d+\.\d+$/.test(x) && !x.startsWith(lanPrefix()));
+    dns.upstreams = [...new Set([...isp.slice(0, 2), '1.1.1.1', '8.8.8.8'])];
+  }
   state.radios = [r0, r1].filter(Boolean);
   if (parental) state.parental = parental;
   state.reservations = await router.reservations().catch(() => state.reservations || []);
@@ -125,7 +132,7 @@ async function reconcileLimits() {
   const L = data.limits;
   if (!L.enabled && !L.managedOnce) return;
   const rules = await router.shapingRules();
-  const managed = rules.filter(r => /^192\.168\.1\.\d+$/.test(r.ip));
+  const managed = rules.filter(r => router.onLan(r.ip));
   const want = new Map();
   if (L.enabled) for (const d of state.devices) {
     if (!d.ip || L.fullSpeed.includes(d.mac)) continue;
@@ -166,7 +173,7 @@ const whoIs = (ip) => {
 };
 const dns = new DnsRecorder({
   dir: DIR, port: Number(process.env.DNS_PORT || 53), whoIs, log,
-  upstreams: (process.env.DNS_UPSTREAMS || '182.237.9.10,8.8.8.8').split(',').map(s => s.trim()).filter(Boolean),
+  upstreams: (process.env.DNS_UPSTREAMS || '1.1.1.1,8.8.8.8').split(',').map(s => s.trim()).filter(Boolean),
 });
 // Always forward lookups (devices may depend on it); only recording can be paused.
 dns.paused = !data.activity.enabled;
@@ -304,7 +311,7 @@ const routes = {
 
   'GET /api/portfw': async () => ({ ...(await router.portForwards()), wanIp: state.status?.wan?.[0]?.ip }),
   'POST /api/portfw/add': async (req, b) => {
-    if (!/^192\.168\.1\.\d+$/.test(b.localIp || '')) throw new Error('Local IP must be on 192.168.1.x');
+    if (!router.onLan(b.localIp)) throw new Error(`Local IP must be on ${lanPrefix()}x`);
     if (!/^\d+(-\d+)?$/.test(String(b.localPort || ''))) throw new Error('Port must be a number or range like 8000-8010');
     await router.addPortForward(b); return router.portForwards();
   },
@@ -405,8 +412,9 @@ const routes = {
   'GET /api/activity/status': async () => ({
     enabled: data.activity.enabled, running: dns.stats.running, error: dns.stats.error,
     queries: dns.stats.queries, lastQuery: dns.stats.lastQuery,
-    devicesSeen: [...dns.stats.clients].filter(ip => ip.startsWith('192.168.1.')).length,
+    devicesSeen: [...dns.stats.clients].filter(ip => ip.startsWith(lanPrefix())).length,
     macIp: selfIdentity()?.ip || null, days: dns.days(),
+    ispDns: (dns.upstreams || []).find(x => x !== '1.1.1.1' && x !== '8.8.8.8') || '1.1.1.1',
   }),
   'GET /api/activity': async (req) => {
     const u = new URL(req.url, 'http://x');

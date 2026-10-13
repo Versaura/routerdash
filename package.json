@@ -1,11 +1,12 @@
 {
   "name": "routerdash",
   "version": "0.3.0",
-  "description": "Local dashboard for the GTPL Camnex CNP4000A router",
+  "description": "RouterDash by Versaura: a local dashboard for Realtek-based ISP fibre routers",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test test/smoke.test.js"
+    "test": "node --test test/smoke.test.js",
+    "check": "node scripts/check-router.js"
   },
   "dependencies": {
     "node-html-parser": "^6.1.13"

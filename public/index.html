@@ -338,7 +338,7 @@ function render() {
   if (!S) return;
   const st = S.status || {};
   const wan = (st.wan || [])[0];
-  $('#hName').textContent = st.model ? `Camnex ${st.model}` : 'Router';
+  $('#hName').textContent = st.model || 'My router';
   $('#hSub').innerHTML = S.error ? `<span class="dot off"></span>${esc(S.error)}`
     : wan ? `<span class="dot ${wan.up?'':'off'}"></span>${wan.up ? 'Internet connected' : 'Internet down'} · ${esc(wan.proto)}`
     : '<span class="dot"></span>Connecting…';
@@ -401,7 +401,7 @@ function openDevice(mac) {
     <div class="sec"><h4>Fixed IP address</h4>
       ${d.reservedIp ? `<div class="s" style="color:var(--mute);font-size:13px">Always gets <b style="color:var(--ink)">${esc(d.reservedIp)}</b>.</div><button class="sm danger" style="margin-top:8px" id="dResDel">Remove fixed IP</button>`
       : `<div style="color:var(--mute);font-size:13px">The router hands out a new address now and then. Fix one so rules and history stay attached to this device.</div>
-         <div class="two" style="margin-top:8px"><input type="text" id="dResIp" value="${esc(d.ip||'192.168.1.')}" inputmode="decimal"><button id="dRes">Fix this IP</button></div>`}
+         <div class="two" style="margin-top:8px"><input type="text" id="dResIp" value="${esc(d.ip||'')}" inputmode="decimal"><button id="dRes">Fix this IP</button></div>`}
       ${d.privateMac ? `<div class="note warn">This device uses a private (random) MAC address, so a fixed IP may stop matching. Turn off "Private Wi-Fi Address" for your home network on the device first${d.isThisMac?' (on a Mac: System Settings → Wi-Fi → Details → Private Wi-Fi address → Off or Fixed)':''}.</div>` : ''}
     </div>
 
@@ -543,7 +543,7 @@ async function loadActivity() {
     <p style="font-size:14px;color:var(--mute)">RouterDash is ready to record, but devices aren't sending their lookups to this Mac yet. Two steps on the router:</p>
     <ol style="font-size:14px;margin:10px 0 0 18px;display:grid;gap:6px">
       <li>Give this Mac a fixed IP (Devices → This Mac → Fix this IP). It is <b>${esc(st.macIp || '—')}</b> now.</li>
-      <li>On the router: LAN → DHCP → DNS option → <b>Set Manually</b>, DNS1 = <b>${esc(st.macIp || 'this Mac')}</b>, DNS2 = 182.237.9.10. Apply, then reconnect devices (or wait for them to renew).</li></ol>
+      <li>On the router: LAN → DHCP → DNS option → <b>Set Manually</b>, DNS1 = <b>${esc(st.macIp || 'this Mac')}</b>, DNS2 = <b>${esc(st.ispDns)}</b> (your provider's DNS). Apply, then reconnect devices (or wait for them to renew).</li></ol>
     <div class="note">DNS2 keeps the internet working if this Mac is off; lookups that go there aren't recorded. Devices using Private Relay, a VPN or "Secure DNS" in Chrome won't show up.</div></div>`;
   $('#actStatus').innerHTML = banner;
   const days = st.days.length ? st.days : [localDay()];
@@ -595,7 +595,7 @@ async function loadPf() {
     $('#pfState').textContent = p.enabled ? 'on' : 'off';
     if (p.wanIp && /^(10\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(p.wanIp)) {
       $('#cgnat').hidden = false;
-      $('#cgnat').innerHTML = `<b>Heads up:</b> your internet IP (${esc(p.wanIp)}) is a private carrier address (CGNAT). Port forwarding rules save fine, but nothing will be reachable from the internet until GTPL gives you a public or static IP. Ask them for one, or use a tunnel like Tailscale or Cloudflare Tunnel instead.`;
+      $('#cgnat').innerHTML = `<b>Heads up:</b> your internet IP (${esc(p.wanIp)}) is a private carrier address (CGNAT). Port forwarding rules save fine, but nothing will be reachable from the internet until your internet provider gives you a public or static IP. Ask them for one, or use a tunnel like Tailscale or Cloudflare Tunnel instead.`;
     }
     $('#pfList').innerHTML = p.rules.length ? p.rules.map((r,i) => `<div class="row"><div class="grow"><div class="t">${esc(r.comment || 'Rule')} <span class="tag">${esc(r.protocol)}</span></div><div class="s">:${esc(r.publicPort)} → ${esc(r.localIp)}:${esc(r.localPort)}</div></div><button class="sm danger" data-pfdel="${i}">Remove</button></div>`).join('') : '<div class="empty">No rules</div>';
     $('#pfList').querySelectorAll('[data-pfdel]').forEach(b => b.onclick = () => act(b, () => api('/api/portfw/delete', { selects: [p.rules[+b.dataset.pfdel].select] }), 'Removed').then(loadPf));

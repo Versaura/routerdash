@@ -41,7 +41,7 @@ test.before(async () => {
   start('test/mock-router.js', { MOCK_PORT: PORTS.router, MOCK_CERT_DIR: TMP });
   start('test/fake-upstream-dns.js', { FAKE_DNS_PORT: PORTS.upstream });
   await sleep(600);
-  start('server.js', { PORT: PORTS.app, ROUTER_PORT: PORTS.router, DNS_PORT: PORTS.dns, DNS_UPSTREAMS: `127.0.0.1:${PORTS.upstream}`, ROUTERDASH_DIR: path.join(TMP, 'data') });
+  start('server.js', { PORT: PORTS.app, ROUTER_PORT: PORTS.router, DNS_PORT: PORTS.dns, DNS_UPSTREAMS: `127.0.0.1:${PORTS.upstream}`, ROUTERDASH_DIR: path.join(TMP, 'data'), LAN_PREFIX: '192.168.1.' });
   await sleep(1200);
 });
 test.after(() => { for (const k of kids) k.kill(); fs.rmSync(TMP, { recursive: true, force: true }); });
